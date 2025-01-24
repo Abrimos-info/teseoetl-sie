@@ -1,0 +1,27 @@
+# OpenSearch Connection Settings
+opensearch.hosts: ['https://localhost:9200']
+opensearch.ssl.verificationMode: certificate
+opensearch.ssl.certificateAuthorities: ["/usr/share/opensearch-dashboards/config/root-ca.pem"]
+opensearch.ssl.certificate: "/usr/share/opensearch-dashboards/config/node1.pem"
+opensearch.ssl.key: "/usr/share/opensearch-dashboards/config/node1-key.pem"
+
+# Server Settings
+server.host: "0.0.0.0"
+server.port: 5601
+
+# Server SSL Settings
+server.ssl.enabled: true
+server.ssl.certificate: "/usr/share/opensearch-dashboards/config/node1.pem"
+server.ssl.key: "/usr/share/opensearch-dashboards/config/node1-key.pem"
+
+# Basic Authentication
+opensearch.username: "admin"
+opensearch.password: "admin"
+
+# Logging Settings
+logging.dest: stdout
+
+# Security Settings
+opensearch_security.cookie.ttl: 86400000
+opensearch_security.session.ttl: 86400000
+opensearch_security.session.keepalive: false

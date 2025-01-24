@@ -1,0 +1,5 @@
+nifi/logs/*
+nifi/conf/archive/*
+nifi/provenance_repository/*
+nifi/flowfile_repository/*
+nifi/state/local/*

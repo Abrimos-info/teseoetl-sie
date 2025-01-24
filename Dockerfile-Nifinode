@@ -1,0 +1,15 @@
+ARG MAINTAINER="Abrimos.info <tech@abrimos.info>"
+FROM apache/nifi:2.0.0
+
+USER root
+ENV NODE_VERSION=18.20.4
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+ENV NVM_DIR=/root/.nvm
+RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
+ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+RUN apt install jq
+RUN node --version
+RUN npm --version
+

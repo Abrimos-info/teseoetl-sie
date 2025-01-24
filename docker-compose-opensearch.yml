@@ -1,0 +1,140 @@
+services:
+  opensearch-node1: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
+    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version
+    environment:
+      - cluster.name=opensearch-cluster # Name the cluster
+      - node.name=opensearch-node1 # Name the node that will run in this container
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=opensearch-node1 # Nodes eligibile to serve as cluster manager
+      - bootstrap.memory_lock=true # Disable JVM heap memory swapping
+      - "DISABLE_INSTALL_DEMO_CONFIG=true" # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
+#      - "DISABLE_SECURITY_PLUGIN=true" # Disables Security plugin
+      - "OPENSEARCH_JAVA_OPTS=-Xms4g -Xmx4g" # Set min and max JVM heap sizes to at least 50% of system RAM
+      - plugins.security.ssl.http.pemcert_filepath=node1.pem
+      - plugins.security.ssl.http.pemkey_filepath=node1-key.pem
+      - plugins.security.ssl.transport.pemcert_filepath=node1.pem
+      - plugins.security.ssl.transport.pemkey_filepath=node1-key.pem
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+#          cpus: '0.001'
+          memory: 6G
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname==teseodev-2  # Replace with your node hostname
+
+    volumes:
+      - opensearch-data1:/var/lib/opensearch/nodes
+      - ./opensearch/teseoetl-opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+      - ./opensearch/config/root-ca.pem:/usr/share/opensearch/config/root-ca.pem
+      - ./opensearch/config/admin.pem:/usr/share/opensearch/config/admin.pem
+      - ./opensearch/config/admin-key.pem:/usr/share/opensearch/config/admin-key.pem
+      - ./opensearch/config/node1.pem:/usr/share/opensearch/config/node1.pem
+      - ./opensearch/config/node1-key.pem:/usr/share/opensearch/config/node1-key.pem
+      - ./opensearch/logs/:/var/log/opensearch
+      - ./opensearch/config/audit.yml:/usr/share/opensearch/config/opensearch-security/audit.yml
+    user: 1000:1000
+    ports:
+      - "9200:9200"  # Expose to the host for external access if needed
+    networks:
+      - teseo_net
+
+  opensearch-node2: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
+    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version
+    environment:
+      - cluster.name=opensearch-cluster # Name the cluster
+      - node.name=opensearch-node2 # Name the node that will run in this container
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=opensearch-node1 # Nodes eligibile to serve as cluster manager
+      - bootstrap.memory_lock=true # Disable JVM heap memory swapping
+      - "DISABLE_INSTALL_DEMO_CONFIG=true" # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
+#      - "DISABLE_SECURITY_PLUGIN=true" # Disables Security plugin
+      - "OPENSEARCH_JAVA_OPTS=-Xms4g -Xmx4g" # Set min and max JVM heap sizes to at least 50% of system RAM
+      - plugins.security.ssl.http.pemcert_filepath=node2.pem
+      - plugins.security.ssl.http.pemkey_filepath=node2-key.pem
+      - plugins.security.ssl.transport.pemcert_filepath=node2.pem
+      - plugins.security.ssl.transport.pemkey_filepath=node2-key.pem
+
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+#          cpus: '0.001'
+          memory: 6G
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname==teseodev-2  # Replace with your node hostname
+
+    volumes:
+      - opensearch-data2:/var/lib/opensearch/nodes
+      - ./opensearch/teseoetl-opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+      - ./opensearch/config/root-ca.pem:/usr/share/opensearch/config/root-ca.pem
+      - ./opensearch/config/admin.pem:/usr/share/opensearch/config/admin.pem
+      - ./opensearch/config/admin-key.pem:/usr/share/opensearch/config/admin-key.pem
+      - ./opensearch/config/node2.pem:/usr/share/opensearch/config/node2.pem
+      - ./opensearch/config/node2-key.pem:/usr/share/opensearch/config/node2-key.pem
+      - ./opensearch/logs/:/var/log/opensearch # TODO: add logs
+      - ./opensearch/config/audit.yml:/usr/share/opensearch/config/opensearch-security/audit.yml
+    user: 1000:1000
+    ports:
+      - "9201:9200"  # Changed from 9200:9200
+    networks:
+      - teseo_net
+
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest # Make sure the version of opensearch-dashboards matches the version of opensearch installed on other nodes
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
+    volumes:
+      - ./opensearch/teseoetl-opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
+      - ./opensearch/config/root-ca.pem:/usr/share/opensearch-dashboards/config/root-ca.pem
+      - ./opensearch/config/node1.pem:/usr/share/opensearch-dashboards/config/node1.pem
+      - ./opensearch/config/node1-key.pem:/usr/share/opensearch-dashboards/config/node1-key.pem
+    ports:
+      - "5601:5601"  # Expose to the host for external access if needed
+    networks:
+      - teseo_net
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname==teseodev-2  # Replace with your node hostname
+      resources:
+        limits:
+#          cpus: '0.001'
+          memory: 4G
+
+volumes:
+  opensearch-data1:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./opensearch/data/1  
+      o: bind
+  opensearch-data2:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./opensearch/data/2
+      o: bind
+
+networks:
+  teseo_net:
+#    external: true
+#    driver: overlay
