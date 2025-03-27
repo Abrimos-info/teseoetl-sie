@@ -1,0 +1,9 @@
+[submodule "teseo_scripts/opensearch-tools"]
+	path = teseo_scripts/opensearch-tools
+	url = https://github.com/Abrimos-info/opensearch-tools
+[submodule "teseo_scripts/opensearch-stream"]
+	path = teseo_scripts/opensearch-stream
+	url = https://github.com/Abrimos-info/opensearch-stream
+[submodule "teseo_scripts/json-transformer"]
+	path = teseo_scripts/json-transformer
+	url = https://github.com/Abrimos-info/json-transformer

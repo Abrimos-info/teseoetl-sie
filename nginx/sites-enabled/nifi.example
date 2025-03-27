@@ -1,0 +1,14 @@
+server {
+    	server_name nifi.[TUDOMINIO.com];
+        listen 80;
+        root /var/www/html;
+
+        server_tokens off; #Hide nginx version and OS
+        index index.html index.htm index.nginx-debian.html;
+        location / {
+                proxy_pass https://localhost:8443/;
+                proxy_cookie_domain localhost  nifi.[TUDOMINIO.com];
+                proxy_set_header X-ProxyHost nifi.[TUDOMINIO.com];
+                proxy_set_header X-ProxyPort 443;
+        }
+}
