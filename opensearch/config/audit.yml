@@ -10,7 +10,3 @@ plugins.security.audit.config.disabled_transport_categories: NONE
 # Enable specific audit events
 plugins.security.audit.config.enable_rest: true
 plugins.security.audit.config.enable_transport: true
-<<<<<<< HEAD
-=======
-
->>>>>>> bf1ecf27eb111f7417395cc18f99eb8e2f2890aa

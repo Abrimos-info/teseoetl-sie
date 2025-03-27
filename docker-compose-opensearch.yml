@@ -1,15 +1,15 @@
 services:
   opensearch-node1: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
-    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version
+    image: opensearchproject/opensearch:2.19.0 # We specify the latest tested version
     environment:
-      - cluster.name=opensearch-cluster # Name the cluster
-      - node.name=opensearch-node1 # Name the node that will run in this container
-      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
-      - cluster.initial_cluster_manager_nodes=opensearch-node1 # Nodes eligibile to serve as cluster manager
+      - cluster.name=${OPENSEARCH_CLUSTER_NAME} # Name the cluster
+      - node.name=${OPENSEARCH_NODE1_NAME} # Name the node that will run in this container
+      - discovery.seed_hosts=${OPENSEARCH_NODE1_NAME},${OPENSEARCH_NODE2_NAME} # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=${OPENSEARCH_NODE1_NAME} # Nodes eligibile to serve as cluster manager
       - bootstrap.memory_lock=true # Disable JVM heap memory swapping
       - "DISABLE_INSTALL_DEMO_CONFIG=true" # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
 #      - "DISABLE_SECURITY_PLUGIN=true" # Disables Security plugin
-      - "OPENSEARCH_JAVA_OPTS=-Xms4g -Xmx4g" # Set min and max JVM heap sizes to at least 50% of system RAM
+      - "OPENSEARCH_JAVA_OPTS=${OPENSEARCH_JAVA_OPTS}" # Set min and max JVM heap sizes to at least 50% of system RAM
       - plugins.security.ssl.http.pemcert_filepath=node1.pem
       - plugins.security.ssl.http.pemkey_filepath=node1-key.pem
       - plugins.security.ssl.transport.pemcert_filepath=node1.pem
@@ -25,12 +25,12 @@ services:
       resources:
         limits:
 #          cpus: '0.001'
-          memory: 6G
+          memory: ${OPENSEARCH_MEMORY_LIMIT}
       placement:
         constraints:
-          - node.role == worker
-          - node.hostname==teseodev-2  # Replace with your node hostname
-
+          - node.role == ${OPENSEARCH_NODE1_PLACEMENT_ROLE}
+          - node.hostname==${OPENSEARCH_NODE1_PLACEMENT_HOSTNAME}  # Replace with your node hostname
+    restart: unless-stopped  
     volumes:
       - opensearch-data1:/var/lib/opensearch/nodes
       - ./opensearch/teseoetl-opensearch.yml:/usr/share/opensearch/config/opensearch.yml
@@ -43,21 +43,21 @@ services:
       - ./opensearch/config/audit.yml:/usr/share/opensearch/config/opensearch-security/audit.yml
     user: 1000:1000
     ports:
-      - "9200:9200"  # Expose to the host for external access if needed
+      - "${OPENSEARCH_NODE1_PORT}:9200"  # Expose to the host for external access if needed
     networks:
       - teseo_net
 
   opensearch-node2: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
-    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version
+    image: opensearchproject/opensearch:2.19.0 # We specify the latest tested version
     environment:
-      - cluster.name=opensearch-cluster # Name the cluster
-      - node.name=opensearch-node2 # Name the node that will run in this container
-      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
-      - cluster.initial_cluster_manager_nodes=opensearch-node1 # Nodes eligibile to serve as cluster manager
+      - cluster.name=${OPENSEARCH_CLUSTER_NAME} # Name the cluster
+      - node.name=${OPENSEARCH_NODE2_NAME} # Name the node that will run in this container
+      - discovery.seed_hosts=${OPENSEARCH_NODE1_NAME},${OPENSEARCH_NODE2_NAME} # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=${OPENSEARCH_NODE1_NAME} # Nodes eligibile to serve as cluster manager
       - bootstrap.memory_lock=true # Disable JVM heap memory swapping
       - "DISABLE_INSTALL_DEMO_CONFIG=true" # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
 #      - "DISABLE_SECURITY_PLUGIN=true" # Disables Security plugin
-      - "OPENSEARCH_JAVA_OPTS=-Xms4g -Xmx4g" # Set min and max JVM heap sizes to at least 50% of system RAM
+      - "OPENSEARCH_JAVA_OPTS=${OPENSEARCH_JAVA_OPTS}" # Set min and max JVM heap sizes to at least 50% of system RAM
       - plugins.security.ssl.http.pemcert_filepath=node2.pem
       - plugins.security.ssl.http.pemkey_filepath=node2-key.pem
       - plugins.security.ssl.transport.pemcert_filepath=node2.pem
@@ -74,12 +74,12 @@ services:
       resources:
         limits:
 #          cpus: '0.001'
-          memory: 6G
+          memory: ${OPENSEARCH_MEMORY_LIMIT}
       placement:
         constraints:
-          - node.role == worker
-          - node.hostname==teseodev-2  # Replace with your node hostname
-
+          - node.role == ${OPENSEARCH_NODE2_PLACEMENT_ROLE}
+          - node.hostname==${OPENSEARCH_NODE2_PLACEMENT_HOSTNAME}  # Replace with your node hostname
+    restart: unless-stopped  
     volumes:
       - opensearch-data2:/var/lib/opensearch/nodes
       - ./opensearch/teseoetl-opensearch.yml:/usr/share/opensearch/config/opensearch.yml
@@ -92,46 +92,65 @@ services:
       - ./opensearch/config/audit.yml:/usr/share/opensearch/config/opensearch-security/audit.yml
     user: 1000:1000
     ports:
-      - "9201:9200"  # Changed from 9200:9200
+      - "${OPENSEARCH_NODE2_PORT}:9200"  # Changed from 9200:9200
     networks:
       - teseo_net
 
 
   opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:latest # Make sure the version of opensearch-dashboards matches the version of opensearch installed on other nodes
+    image: opensearchproject/opensearch-dashboards:2.19.0 # We specify the latest tested version
     environment:
-      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
+      OPENSEARCH_HOSTS: '["https://${OPENSEARCH_NODE1_NAME}:9200","https://${OPENSEARCH_NODE2_NAME}:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
     volumes:
       - ./opensearch/teseoetl-opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
       - ./opensearch/config/root-ca.pem:/usr/share/opensearch-dashboards/config/root-ca.pem
       - ./opensearch/config/node1.pem:/usr/share/opensearch-dashboards/config/node1.pem
       - ./opensearch/config/node1-key.pem:/usr/share/opensearch-dashboards/config/node1-key.pem
+      - ./opensearch/ui-assets/teseoetl.svg:/usr/share/opensearch-dashboards/assets/teseoetl.svg
+      - ./opensearch/ui-assets/teseoetl16.ico:/usr/share/opensearch-dashboards/assets/teseoetl16.png
+      - ./opensearch/ui-assets/teseoetl-icon.svg:/usr/share/opensearch-dashboards/assets/teseoetl-icon.svg
+      - ./opensearch/ui-assets/teseoetl-blanco.svg:/usr/share/opensearch-dashboards/assets/teseoetl-blanco.svg
     ports:
-      - "5601:5601"  # Expose to the host for external access if needed
+      - "${OPENSEARCH_DASHBOARDS_PORT}:5601"  # Expose to the host for external access if needed
     networks:
       - teseo_net
+    restart: unless-stopped  
     deploy:
       placement:
         constraints:
-          - node.role == worker
-          - node.hostname==teseodev-2  # Replace with your node hostname
+          - node.role == ${OPENSEARCH_NODE2_PLACEMENT_ROLE}
+          - node.hostname==${OPENSEARCH_NODE2_PLACEMENT_HOSTNAME}  # Replace with your node hostname
       resources:
         limits:
 #          cpus: '0.001'
-          memory: 4G
+          memory: ${OPENSEARCH_DASHBOARDS_MEMORY_LIMIT}
+
+# To run this service independently after init:
+# set -o allexport && source .env && set +o allexport && bash opensearch/init_audit_template.sh
+  init-audit-template:
+    image: curlimages/curl:latest
+    depends_on:
+      - opensearch-node1
+    environment:
+      - OPENSEARCH_URL=${OPENSEARCH_URL}
+    volumes:
+      - ./opensearch/init_audit_template.sh:/usr/local/bin/init_audit_template.sh
+    entrypoint: ["/bin/sh", "/usr/local/bin/init_audit_template.sh"]
+    networks:
+      - teseo_net
 
 volumes:
   opensearch-data1:
     driver: local
     driver_opts:
       type: none
-      device: ./opensearch/data/1  
+      device: ${OPENSEARCH_DATA1_DIR}
       o: bind
   opensearch-data2:
     driver: local
     driver_opts:
       type: none
-      device: ./opensearch/data/2
+      device: ${OPENSEARCH_DATA2_DIR}
       o: bind
 
 networks:

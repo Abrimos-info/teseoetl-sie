@@ -2,36 +2,39 @@ services:
   tika:
     ports:
       - target: 9998
-        published: 9998
+        published: ${TIKA_PORT}
         protocol: tcp
         mode: host
     image: apache/tika:latest-full
     deploy:
       resources:
         limits:
-          memory: 8G
+          memory: ${TIKA_MEMORY_LIMIT}
+    restart: unless-stopped  
     networks:
       - teseo_net
 
   nifi:
     ports:
       - target: 8443
-        published: 8443
+        published: ${NIFI_PORT}
         protocol: tcp
         mode: host
     image: abrimostech/teseoetl:1.0.0
-    hostname: nifi.teseodev1.abrimos.info
+    hostname: ${NIFI_HOSTNAME}
     environment:
-      - TRUSTSTORE_PASSWORD=changeme-teseoetl-default-trustsotre-password!
+      - SINGLE_USER_CREDENTIALS_PASSWORD=${NIFI_SINGLE_USER_PASSWORD}
+      - SINGLE_USER_CREDENTIALS_USERNAME=${NIFI_SINGLE_USER_USERNAME}
+      - TRUSTSTORE_PASSWORD=${NIFI_TRUSTSTORE_PASSWORD}
+      - TESEO_SCRIPTS_DIR=/opt/teseo_scripts/
+      - TESEO_FILES_DIR=/opt/teseo_files/
       - TRUSTSTORE_TYPE=JKS
-      - NIFI_WEB_PROXY_HOST=nifi.teseodev1.abrimos.info
-      - SINGLE_USER_CREDENTIALS_USERNAME=admin
-      - SINGLE_USER_CREDENTIALS_PASSWORD=teseoetl-default-password
+      - NIFI_WEB_PROXY_HOST=${NIFI_HOSTNAME}
       - NIFI_WEB_HTTPS_HOST=0.0.0.0
       - NIFI_REMOTE_INPUT_HOST=0.0.0.0
       - NIFI_CLUSTER_NODE_ADDRESS=0.0.0.0
       - HOSTNAME_OVERRIDE=0.0.0.0
-      - NIFI_SENSITIVE_PROPS_KEY=teseoetl-sensitive-props-key
+      - NIFI_SENSITIVE_PROPS_KEY=${NIFI_SENSITIVE_PROPS_KEY}
       - NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER=single-user-provider
       - NIFI_SECURITY_USER_AUTHORIZER=single-user-authorizer
       - NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER_CONFIGURATION_FILE=/opt/nifi/nifi-current/conf/login-identity-providers.xml
@@ -41,10 +44,12 @@ services:
       - NIFI_SECURITY_IDENTITY_MAPPING_TRANSFORM_KERB=UPPER
       - NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER_GENERATED_USERNAME=
       - NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER_GENERATED_PASSWORD=
+      - OPENSEARCH_URL=${OPENSEARCH_URL}
     deploy:
       resources:
         limits:
-          memory: 8G
+          memory: ${NIFI_MEMORY_LIMIT}
+    restart: unless-stopped  
     volumes:
       - type: bind
         source: ./nifi/certs
@@ -53,10 +58,10 @@ services:
         source: ./nifi/conf
         target: /opt/nifi/nifi-current/conf
       - type: bind
-        source: ./nifi/flowfile_repository
+        source: ${NIFI_FLOWFILE_REPOSITORY_DIR}
         target: /opt/nifi/nifi-current/flowfile_repository
       - type: bind
-        source: ./nifi/provenance_repository
+        source: ${NIFI_PROVENANCE_REPOSITORY_DIR}
         target: /opt/nifi/nifi-current/provenance_repository
       - type: bind
         source: ./nifi/logs
@@ -75,5 +80,5 @@ services:
 
 networks:
   teseo_net:
-    driver: overlay
-    attachable: true
+#    driver: overlay
+#    attachable: true

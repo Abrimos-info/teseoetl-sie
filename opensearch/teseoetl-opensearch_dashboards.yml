@@ -25,3 +25,36 @@ logging.dest: stdout
 opensearch_security.cookie.ttl: 86400000
 opensearch_security.session.ttl: 86400000
 opensearch_security.session.keepalive: false
+
+opensearchDashboards.branding:
+  logo:
+    defaultUrl: "/ui/assets/teseoetl-blanco.svg"
+  #  darkModeUrl: "https://example.com/validDarkModeUrl.svg"
+  mark:
+     defaultUrl: "/ui/assets/teseoetl-icon.svg"
+  #   darkModeUrl: ""
+  loadingLogo:
+     defaultUrl: "/ui/assets/teseoetl-icon.svg"
+  #   darkModeUrl: ""
+  faviconUrl: "/ui/assets/teseoetl-icon.svg"
+  applicationTitle: "TeseoETL v2.0.2"
+
+# Descomentar para tener workspaces
+#workspace.enabled: false
+#uiSettings:
+#  overrides:
+#    "home:useNewHomePage": true
+
+opensearchDashboards.dashboardAdmin.users: ["admin"]
+opensearchDashboards.dashboardAdmin.groups: ["admin"]
+savedObjects.permission.enabled: true
+#theme
+#home
+# The default application to load.
+opensearchDashboards.defaultAppId: "discover"
+
+# Set the value to true to disable the welcome screen
+#home.disableWelcomeScreen: false
+
+# Set the value to true to disable the new theme introduction modal
+home.disableNewThemeModal: true
